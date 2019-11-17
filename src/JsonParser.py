@@ -62,10 +62,6 @@ class JsonParser:
         
         return out
 
-    def filterDataByDate(self, data: list, start: datetime = None, end: datetime = None) -> list:
-
-        print(1)
-
     def get(self, stations: list, parameters: list, start: datetime = None, end: datetime = None) -> list:
         """
         Given a datetime, a list of stations and a list of parameters
