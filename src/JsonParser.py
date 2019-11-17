@@ -70,7 +70,6 @@ class JsonParser:
         """
         stations = self.convertStationList(stations)
         parameters = self.convertParameterList(parameters)
-        print(parameters)
         # Filter for stations and parameters
         filtered = [x for x in self.data if x[1] in stations and x[2] in parameters]
         
@@ -82,8 +81,10 @@ class JsonParser:
         return [x for x in filtered if x[0] >= start and x[0] <= end]
 
 
-"Example usage"
-s = JsonParser("../data/data_head.json")
+"""
+Example usage
+"""
+# s = JsonParser("../data/data.json")
 
 """
 Get for station Druzhba all parameters, for the time between 2016/1/20 and 2016/1/21
