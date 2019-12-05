@@ -1,7 +1,7 @@
-from CsvParser import CsvParser
+from src.CsvParser import CsvParser
 import matplotlib.pyplot as plt
 import matplotlib
-from Enums import *
+from src.Enums import *
 from datetime import datetime
 
 parser = CsvParser("../data/data.csv")

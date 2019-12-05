@@ -1,6 +1,8 @@
 import csv
 from datetime import datetime
-from Enums import Station, Parameter
+from src.Enums.Enums import Parameter, Station
+
+
 
 class CsvParser:
     """
