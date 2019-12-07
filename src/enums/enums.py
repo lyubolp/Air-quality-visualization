@@ -1,5 +1,13 @@
+"""
+Contains the needed enums for using the CSVParser
+"""
 from enum import IntEnum
+
+
 class Station(IntEnum):
+    """
+    Used for selecting the station from which we want the data
+    """
     All = -1
     Druzhba = 1
     Nadezhda = 2
@@ -8,7 +16,11 @@ class Station(IntEnum):
     Kopitoto = 5
     Mladost = 6
 
+
 class Parameter(IntEnum):
+    """
+    Used for selecting the parameters from the stations
+    """
     All = -1
     PM = 0
     NO2 = 1
