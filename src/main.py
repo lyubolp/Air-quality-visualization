@@ -1,10 +1,10 @@
-from src.CsvParser import CsvParser, Parameter, Station
+from src.csv_parser import csv_parser, Parameter, Station
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt, matplotlib.dates
 from matplotlib.widgets import Slider, Button, RadioButtons
 
-s = CsvParser.CsvParser("data/data.csv")
+s = csv_parser.CsvParser("data/data.csv")
 result = s.get([Station.Kopitoto], [Parameter.Temperature], datetime(2016, 1, 21, 0), datetime(2016, 1, 22, 0))
 
 dates = []
