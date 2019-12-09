@@ -5,7 +5,6 @@ import matplotlib.dates
 from src.csv_parser import csv_parser, Parameter, Station
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-import matplotlib.dates
 from matplotlib.widgets import Slider, RadioButtons
 
 
@@ -34,8 +33,11 @@ class Plotter:
             Parameter.CO: 10,
             Parameter.O3: 180,
             Parameter.SO2: 350,
-            Parameter.Humidity: (30, 60)
+            Parameter.Humidity: 60
         }
+        self.START_DATE = matplotlib.dates.datestr2num("2016-01-20")
+        self.END_DATE = matplotlib.dates.datestr2num("2018-06-19")
+        self.spos = None
 
     def __parse_data_result(self):
         self.dates = []
@@ -54,16 +56,11 @@ class Plotter:
         self.axes.relim()  # make sure all the data fits
         self.axes.autoscale()  # auto-scale
 
-        if self.parameter in self.max_values:
-            if self.parameter == Parameter.Humidity:
-                plt.hlines(self.max_values[self.parameter][0], self.dates[0], self.dates[-1])  # the maximum allowed level
-                plt.hlines(self.max_values[self.parameter][1], self.dates[0], self.dates[-1])  # the maximum allowed level
-            else:
-                plt.hlines(self.max_values[self.parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
+        # if self.parameter in self.max_values:
+        #     plt.hlines(self.max_values[self.parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
 
     def change_source(self, label):
         if label == 'Дружба':
-
             self.station = Station.Druzhba
         elif label == 'Копитото':
             self.station = Station.Kopitoto
@@ -121,22 +118,35 @@ class Plotter:
         self.__parse_data_result()
         self.__replot_data()
 
+    def change_date(self, value):
+        self.day = matplotlib.dates.num2date(value, tz=None)
+        self.day = self.day.replace(tzinfo=None)
+        self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
+        self.spos.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.spos.val))
+        self.__parse_data_result()
+        self.__replot_data()
+
     def plot_single_region_day(self, region: Station, parameter: Parameter, day: datetime):
         self.station = region
         self.parameter = parameter
         self.day = day
-        self.result = self.parser.get([region], [parameter], day, day + timedelta(days=1))
+        self.result = self.parser.get([region], [parameter], self.day, self.day + timedelta(days=1))
         self.__parse_data_result()
-
         self.figure, _ = plt.subplots()
 
         plt.subplots_adjust(left=0.20, bottom=0.25)
         self.plot, = plt.plot_date(self.dates, self.values, markersize=5)
+
+        # if self.parameter in self.max_values:
+        #     plt.hlines(self.max_values[parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
+
         self.axes = plt.gca()
 
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
-        spos = Slider(axamp, 'Pos', 1, 10)
+        self.spos = Slider(axamp, 'Дата', self.START_DATE, self.END_DATE, valstep=1)
+        self.spos.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.spos.val))
+        self.spos.on_changed(self.change_date)
 
         change_station_position = plt.axes([0.025, 0.6, 0.12, 0.25], facecolor=axcolor)
 
@@ -156,13 +166,6 @@ class Plotter:
 
         manager = plt.get_current_fig_manager()
         manager.window.showMaximized()
-
-        if parameter in self.max_values:
-            if parameter == Parameter.Humidity:
-                plt.hlines(self.max_values[parameter][0], self.dates[0], self.dates[-1])  # the maximum allowed level
-                plt.hlines(self.max_values[parameter][1], self.dates[0], self.dates[-1])  # the maximum allowed level
-            else:
-                plt.hlines(self.max_values[parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
 
         plt.show()
 
