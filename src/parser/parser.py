@@ -1,9 +1,10 @@
 from src.enums.enums import Parameter, Station
 from datetime import datetime
 
+
 class Parser:
     def __init__(self):
-        pass
+        self.data = []
 
     @staticmethod
     def convert_station_list(station: list) -> list:
@@ -17,9 +18,9 @@ class Parser:
                 out.append(i.value)
             else:
                 return []
-        if -1 in out:
+        if Station.All.value in out:
             out = list(map(int, Station))
-            out.remove(-1)
+            out.remove(Station.All.value)
         return out
 
     @staticmethod
@@ -35,9 +36,9 @@ class Parser:
             else:
                 return []
 
-        if -1 in out:
+        if Parameter.All.value in out:
             out = list(map(int, Parameter))
-            out.remove(-1)
+            out.remove(Parameter.All.value)
 
         return out
 
@@ -57,5 +58,3 @@ class Parser:
         if end is None:
             end = start
         return [x for x in filtered if start <= x[0] <= end]
-
-
