@@ -49,7 +49,7 @@ class CsvParser(Parser):
 
         self.data = []
         for i in csv_data:
-            i[0] = datetime.strptime(i[0][:-6], "%Y-%m-%d %H") # convert date
+            i[0] = datetime.strptime(i[0][:-6], "%Y-%m-%d %H")  # convert date
             i[1] = int(i[1]) # convert station to int
             i[2] = int(i[2]) # convert param to int
             i[3] = float(i[3]) # convert level to float
