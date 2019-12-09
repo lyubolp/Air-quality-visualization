@@ -37,7 +37,7 @@ class Plotter:
         }
         self.START_DATE = matplotlib.dates.datestr2num("2016-01-20")
         self.END_DATE = matplotlib.dates.datestr2num("2018-06-19")
-        self.spos = None
+        self.date_slider = None
 
     def __parse_data_result(self):
         self.dates = []
@@ -122,7 +122,7 @@ class Plotter:
         self.day = matplotlib.dates.num2date(value, tz=None)
         self.day = self.day.replace(tzinfo=None)
         self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
-        self.spos.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.spos.val))
+        self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
         self.__parse_data_result()
         self.__replot_data()
 
@@ -144,16 +144,20 @@ class Plotter:
 
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
-        self.spos = Slider(axamp, 'Дата', self.START_DATE, self.END_DATE, valstep=1)
-        self.spos.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.spos.val))
-        self.spos.on_changed(self.change_date)
+        self.date_slider = Slider(axamp, 'Дата', self.START_DATE, self.END_DATE, valstep=1,
+                                  valinit=matplotlib.dates.date2num(self.day))
+        self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
+        self.date_slider.on_changed(self.change_date)
+
+        print(matplotlib.dates.date2num(self.day))
 
         change_station_position = plt.axes([0.025, 0.6, 0.12, 0.25], facecolor=axcolor)
-
         change_station_button = RadioButtons(change_station_position,
-                                             ['Всички', 'Дружба', 'Копитото', 'Красно село',
-                                              'Младост', 'Надежда', 'Павлово'],
+                                             ['Всички', 'Дружба', 'Надежда',  'Красно село',
+                                              'Павлово', 'Копитото', 'Младост'],
                                              active=1)
+
+        change_station_button.active = self.station
         change_station_button.on_clicked(self.change_source)
 
         change_parameter_position = plt.axes([0.025, 0.2, 0.12, 0.25], facecolor=axcolor)
@@ -162,6 +166,8 @@ class Plotter:
                                                 'O3', 'SO2', 'Влажност', 'Налягане',
                                                 'Вятър', 'Радиация', 'Температура'],
                                                active=12)
+
+        change_parameter_button.active = self.parameter + 1
         change_parameter_button.on_clicked(self.change_parameter)
 
         manager = plt.get_current_fig_manager()
