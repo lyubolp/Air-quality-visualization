@@ -1,5 +1,8 @@
 """
 Holds functions to convert the json data to csv format
+
+Usage:
+convert("data/data.json", "data/data.csv")
 """
 import json
 from datetime import datetime
@@ -19,6 +22,8 @@ def convert(file_name, output_file):
 
     data = []
     for i in json_data:
+        if i[4] == "1":  # remove the value from the dataset if it's invalid
+            continue
         i[0] = datetime.strptime(i[0][:-6], "%Y-%m-%d %H")  # convert date
         i = i[:-1]  # remove invalid field
         i[1] = int(i[1])  # convert station to int
@@ -30,6 +35,3 @@ def convert(file_name, output_file):
     with open(output_file, 'w') as write_file:
         writer = csv.writer(write_file)
         writer.writerows(data)
-
-
-convert("../data/data.json", "../data/data.csv")
