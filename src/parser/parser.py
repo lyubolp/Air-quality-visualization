@@ -1,10 +1,13 @@
 from src.enums.enums import Parameter, Station
 from datetime import datetime
+import pandas as pd
+from pandas.plotting import register_matplotlib_converters
 
 
 class Parser:
     def __init__(self):
-        self.data = []
+        self.data = None
+        register_matplotlib_converters()
 
     @staticmethod
     def convert_enum_key_list_to_enum_value_list(items: list, enum_type):
@@ -50,12 +53,26 @@ class Parser:
 
         If no end date is provided the assumed end date is the same day, i.e the given period is 1 day
         """
+        filtered = self.get_df(stations, parameters, start, end)
+        return list(filtered.itertuples(index=False, name=None))
+
+    def get_df(self, stations: list, parameters: list,
+               start: datetime = None, end: datetime = None) -> pd.DataFrame:
+        """
+        Given a datetime, a list of stations and a list of parameters
+        return the data which matches these parameters for these stations and
+        that time
+
+        If no end date is provided the assumed end date is the same day, i.e the given period is 1 day
+        """
         stations = self.convert_station_list(stations)
         parameters = self.convert_parameter_list(parameters)
         # Filter for stations and parameters
-        filtered = [x for x in self.data if x[1] in stations and x[2] in parameters]
+        filtered = self.data[(self.data['station'].isin(stations)) & (self.data['param'].isin(parameters))]
+
         if start is None:
             return filtered
         if end is None:
             end = start
-        return [x for x in filtered if start <= x[0] <= end]
+
+        return filtered[(filtered['time'].gt(start)) & (filtered['time'].lt(end))]

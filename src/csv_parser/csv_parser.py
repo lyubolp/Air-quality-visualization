@@ -32,6 +32,7 @@ for i in r:
 import csv
 from datetime import datetime
 from src.parser.parser import Parser
+import pandas as pd
 
 
 class CsvParser(Parser):
@@ -39,18 +40,9 @@ class CsvParser(Parser):
     Given a file with CSV, this class will parse the
     file to a list
     """
+
     def __init__(self, file_name: str):
         super().__init__()
         self.file_name = file_name
-        csv_data = []
-        with open(file_name, 'r') as read_file:
-            reader = csv.reader(read_file)
-            csv_data = list(reader)
-
-        self.data = []
-        for i in csv_data:
-            i[0] = datetime.strptime(i[0][:-6], "%Y-%m-%d %H")  # convert date
-            i[1] = int(i[1]) # convert station to int
-            i[2] = int(i[2]) # convert param to int
-            i[3] = float(i[3]) # convert level to float
-            self.data.append(i)
+        self.data = pd.read_csv(file_name, header=None, names=["time", "station", "param", "level"])
+        self.data['time'] = pd.to_datetime(self.data['time'])
