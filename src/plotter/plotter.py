@@ -9,8 +9,6 @@ from matplotlib.widgets import Slider, RadioButtons
 
 
 class Plotter:
-    # 2016-01-20 -> 2018-06-19
-
     def __init__(self, file_path=None):
         if file_path is None:
             self.parser = None
@@ -38,26 +36,36 @@ class Plotter:
         self.START_DATE = matplotlib.dates.datestr2num("2016-01-20")
         self.END_DATE = matplotlib.dates.datestr2num("2018-06-19")
         self.date_slider = None
+        self.max_level = None
 
     def __parse_data_result(self):
-        self.dates = []
-        self.values = []
+        if self.station is not Station.All and self.parameter is not Parameter.All:
+            self.dates = []
+            self.values = []
 
-        for i in self.result:
-            self.dates.append(i[0])
-            self.values.append(i[3])
+            for i in self.result:
+                self.dates.append(i[0])
+                self.values.append(i[3])
 
-        self.dates = matplotlib.dates.date2num(self.dates)
+            self.dates = matplotlib.dates.date2num(self.dates)
 
     def __replot_data(self):
         self.plot.set_xdata(self.dates)
         self.plot.set_ydata(self.values)
+
+        if self.parameter in self.max_values:
+            self.max_level.set_visible(True)
+            horizontal_line = []
+            for i in range(len(self.dates)):
+                horizontal_line.append(self.max_values[self.parameter])
+            self.max_level.set_ydata(horizontal_line)
+        else:
+            self.max_level.set_ydata(self.values)
+            self.max_level.set_visible(False)
+
         self.figure.canvas.draw_idle()
         self.axes.relim()  # make sure all the data fits
         self.axes.autoscale()  # auto-scale
-
-        # if self.parameter in self.max_values:
-        #     plt.hlines(self.max_values[self.parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
 
     def change_source(self, label):
         if label == 'Дружба':
@@ -72,8 +80,6 @@ class Plotter:
             self.station = Station.Nadezhda
         elif label == 'Павлово':
             self.station = Station.Pavlovo
-        elif label == 'Всички':
-            pass
         else:
             # Should not be thrown - mainly for debugging purposes
             raise Exception("Invalid label")
@@ -83,10 +89,7 @@ class Plotter:
         self.__replot_data()
 
     def change_parameter(self, label):
-        if label == 'Всички':
-            pass
-            #self.result = self.parser.get([self.station], [Parameter.All], self.day, self.day + timedelta(days=1))
-        elif label == 'PM':
+        if label == 'PM':
             self.parameter = Parameter.PM
         elif label == 'NO2':
             self.parameter = Parameter.NO2
@@ -131,16 +134,23 @@ class Plotter:
         self.parameter = parameter
         self.day = day
         self.result = self.parser.get([region], [parameter], self.day, self.day + timedelta(days=1))
+
+        print(self.result)
         self.__parse_data_result()
         self.figure, _ = plt.subplots()
 
+
         plt.subplots_adjust(left=0.20, bottom=0.25)
+
         self.plot, = plt.plot_date(self.dates, self.values, markersize=5)
-
-        # if self.parameter in self.max_values:
-        #     plt.hlines(self.max_values[parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
-
         self.axes = plt.gca()
+
+        if self.parameter in self.max_values:
+            horizontal_line = []
+            for i in range(len(self.dates)):
+                horizontal_line.append(self.max_values[self.parameter])
+            self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+            print(type(self.max_level))
 
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
@@ -149,25 +159,23 @@ class Plotter:
         self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
         self.date_slider.on_changed(self.change_date)
 
-        print(matplotlib.dates.date2num(self.day))
-
         change_station_position = plt.axes([0.025, 0.6, 0.12, 0.25], facecolor=axcolor)
         change_station_button = RadioButtons(change_station_position,
-                                             ['Всички', 'Дружба', 'Надежда',  'Красно село',
+                                             ['Дружба', 'Надежда', 'Красно село',
                                               'Павлово', 'Копитото', 'Младост'],
                                              active=1)
 
-        change_station_button.active = self.station
+        change_station_button.active = self.station - 1
         change_station_button.on_clicked(self.change_source)
 
         change_parameter_position = plt.axes([0.025, 0.2, 0.12, 0.25], facecolor=axcolor)
         change_parameter_button = RadioButtons(change_parameter_position,
-                                               ['Всички', 'PM', 'NO2', 'NO', 'C6H6', 'CO',
+                                               ['PM', 'NO2', 'NO', 'C6H6', 'CO',
                                                 'O3', 'SO2', 'Влажност', 'Налягане',
                                                 'Вятър', 'Радиация', 'Температура'],
-                                               active=12)
+                                               active=11)
 
-        change_parameter_button.active = self.parameter + 1
+        change_parameter_button.active = self.parameter
         change_parameter_button.on_clicked(self.change_parameter)
 
         manager = plt.get_current_fig_manager()
