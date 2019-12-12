@@ -1,5 +1,5 @@
 """
-Contains sample code for plotting the data from the stations
+Contains the Plotter class, used for the main user interface
 """
 import matplotlib.dates
 from src.csv_parser import csv_parser, Parameter, Station
@@ -9,8 +9,9 @@ from matplotlib.widgets import Slider, RadioButtons
 
 
 class Plotter:
-    # 2016-01-20 -> 2018-06-19
-
+    """
+    Used to visualize different data in different ways
+    """
     def __init__(self, file_path=None):
         if file_path is None:
             self.parser = None
@@ -20,7 +21,8 @@ class Plotter:
         self.result = []
         self.station = None
         self.parameter = None
-        self.day = None
+        self.start = None
+        self.end = None
         self.plot = None
         self.dates = []
         self.values = []
@@ -38,28 +40,61 @@ class Plotter:
         self.START_DATE = matplotlib.dates.datestr2num("2016-01-20")
         self.END_DATE = matplotlib.dates.datestr2num("2018-06-19")
         self.date_slider = None
+        self.max_level = None
+        self.is_single_day = False
+        self.missing_data_text = None
 
     def __parse_data_result(self):
-        self.dates = []
-        self.values = []
+        """
+        Splits the results to dates and values
+        """
+        if self.station is not Station.All and self.parameter is not Parameter.All:
+            self.dates = []
+            self.values = []
 
-        for i in self.result:
-            self.dates.append(i[0])
-            self.values.append(i[3])
+            for i in self.result:
+                self.dates.append(i[0])
+                self.values.append(i[3])
 
-        self.dates = matplotlib.dates.date2num(self.dates)
+            self.dates = matplotlib.dates.date2num(self.dates)
 
     def __replot_data(self):
+        """
+        Used for updating the plot
+        """
         self.plot.set_xdata(self.dates)
         self.plot.set_ydata(self.values)
+
+        if self.parameter in self.max_values:
+            self.max_level.set_visible(True)
+            horizontal_line = []
+            for i in range(len(self.dates)):
+                horizontal_line.append(self.max_values[self.parameter])
+            self.max_level.set_xdata(self.dates)
+            self.max_level.set_ydata(horizontal_line)
+        else:
+            if len(self.result) is not 0:
+                self.max_level.set_xdata(self.dates)
+                self.max_level.set_ydata(self.values)
+                self.max_level.set_visible(False)
+            else:
+                self.max_level.set_xdata(self.START_DATE)
+                self.max_level.set_ydata([0])
+
         self.figure.canvas.draw_idle()
         self.axes.relim()  # make sure all the data fits
         self.axes.autoscale()  # auto-scale
 
-        # if self.parameter in self.max_values:
-        #     plt.hlines(self.max_values[self.parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
+        if len(self.result) is 0:
+            self.missing_data_text.set_visible(True)
+        else:
+            self.missing_data_text.set_visible(False)
 
     def change_source(self, label):
+        """
+        When the source radio button is pressed, changes the stattion
+        from which the data is plotted
+        """
         if label == 'Дружба':
             self.station = Station.Druzhba
         elif label == 'Копитото':
@@ -72,21 +107,20 @@ class Plotter:
             self.station = Station.Nadezhda
         elif label == 'Павлово':
             self.station = Station.Pavlovo
-        elif label == 'Всички':
-            pass
         else:
             # Should not be thrown - mainly for debugging purposes
             raise Exception("Invalid label")
 
-        self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
+        self.result = self.parser.get([self.station], [self.parameter], self.start, self.end)
         self.__parse_data_result()
         self.__replot_data()
 
     def change_parameter(self, label):
-        if label == 'Всички':
-            pass
-            #self.result = self.parser.get([self.station], [Parameter.All], self.day, self.day + timedelta(days=1))
-        elif label == 'PM':
+        """
+        When to change parameter radio button is pressed, changes the parameter
+        that is being plotted
+        """
+        if label == 'PM':
             self.parameter = Parameter.PM
         elif label == 'NO2':
             self.parameter = Parameter.NO2
@@ -113,83 +147,102 @@ class Plotter:
         else:
             # Should not be thrown - mainly for debugging purposes
             raise Exception("Invalid parameter")
-
-        self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
+        self.result = self.parser.get([self.station], [self.parameter], self.start, self.end)
         self.__parse_data_result()
         self.__replot_data()
 
-    def change_date(self, value):
-        self.day = matplotlib.dates.num2date(value, tz=None)
-        self.day = self.day.replace(tzinfo=None)
-        self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
-        self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
+    def __change_start_date(self, value):
+        """
+        Changes the start date, from which the data should be gotten
+        """
+        self.start = matplotlib.dates.num2date(value, tz=None)
+        self.start = self.start.replace(tzinfo=None)
+
+        if self.is_single_day is True:
+            self.end = self.start + timedelta(days=1)
+
+        self.result = self.parser.get([self.station], [self.parameter], self.start, self.end)
+        self.date_slider.valfmt = '{:%Y-%m-%d}'.format(
+            matplotlib.dates.num2date(self.date_slider.val))
         self.__parse_data_result()
         self.__replot_data()
 
     def plot_single_region_day(self, region: Station, parameter: Parameter, day: datetime):
+        """
+        Plots the data from a given region,  for a given parameter in a given day
+        """
         self.station = region
         self.parameter = parameter
-        self.day = day
-        self.result = self.parser.get([region], [parameter], self.day, self.day + timedelta(days=1))
+        self.start = day
+        self.end = self.start + timedelta(days=1)
+        self.is_single_day = True
+        self.result = self.parser.get([region], [parameter],
+                                      self.start, self.start + timedelta(days=1))
+
         self.__parse_data_result()
         self.figure, _ = plt.subplots()
 
+        self.missing_data_text = self.figure.text(0.63, 0.07, 'Липсващи данни',
+                                                  verticalalignment='bottom',
+                                                  horizontalalignment='right',
+                                                  color='red', fontsize=25)
         plt.subplots_adjust(left=0.20, bottom=0.25)
-        self.plot, = plt.plot_date(self.dates, self.values, markersize=5)
 
-        # if self.parameter in self.max_values:
-        #     plt.hlines(self.max_values[parameter], self.dates[0], self.dates[-1])  # the maximum allowed level
+        if len(self.result) is 0:
+            self.missing_data_text.set_visible(True)
+            self.plot, = plt.plot_date([self.START_DATE], [0], markersize=5)
+
+        else:
+            self.missing_data_text.set_visible(False)
+            self.plot, = plt.plot_date(self.dates, self.values, markersize=5)
 
         self.axes = plt.gca()
 
+        if self.parameter in self.max_values:
+            horizontal_line = []
+            for i in range(len(self.dates)):
+                horizontal_line.append(self.max_values[self.parameter])
+            self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+        else:
+            horizontal_line = []
+            if len(self.result) is 0:
+                self.max_level, = plt.plot(self.START_DATE, [0], markersize=5)
+            else:
+                for i in range(len(self.dates)):
+                    horizontal_line.append(self.values[0])
+                self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+            self.max_level.set_visible(False)
+
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
-        self.date_slider = Slider(axamp, 'Дата', self.START_DATE, self.END_DATE, valstep=1,
-                                  valinit=matplotlib.dates.date2num(self.day))
-        self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
-        self.date_slider.on_changed(self.change_date)
+        self.date_slider = Slider(axamp, 'Дата', self.START_DATE, self.END_DATE,
+                                  valstep=1,
+                                  valinit=matplotlib.dates.date2num(self.start))
 
-        print(matplotlib.dates.date2num(self.day))
+        self.date_slider.valfmt = '{:%Y-%m-%d}'.format(
+            matplotlib.dates.num2date(self.date_slider.val))
+        self.date_slider.on_changed(self.__change_start_date)
 
         change_station_position = plt.axes([0.025, 0.6, 0.12, 0.25], facecolor=axcolor)
         change_station_button = RadioButtons(change_station_position,
-                                             ['Всички', 'Дружба', 'Надежда',  'Красно село',
+                                             ['Дружба', 'Надежда', 'Красно село',
                                               'Павлово', 'Копитото', 'Младост'],
                                              active=1)
 
-        change_station_button.active = self.station
+        change_station_button.active = self.station - 1
         change_station_button.on_clicked(self.change_source)
 
         change_parameter_position = plt.axes([0.025, 0.2, 0.12, 0.25], facecolor=axcolor)
         change_parameter_button = RadioButtons(change_parameter_position,
-                                               ['Всички', 'PM', 'NO2', 'NO', 'C6H6', 'CO',
+                                               ['PM', 'NO2', 'NO', 'C6H6', 'CO',
                                                 'O3', 'SO2', 'Влажност', 'Налягане',
                                                 'Вятър', 'Радиация', 'Температура'],
-                                               active=12)
+                                               active=11)
 
-        change_parameter_button.active = self.parameter + 1
+        change_parameter_button.active = self.parameter
         change_parameter_button.on_clicked(self.change_parameter)
 
         manager = plt.get_current_fig_manager()
         manager.window.showMaximized()
 
         plt.show()
-
-# PARSER = csv_parser.CsvParser("data/data.csv")
-# RESULT = PARSER.get([Station.Kopitoto], [Parameter.CO])
-#
-# DATES = []
-# VALUES = []
-# for i in RESULT:
-#     DATES.append(i[0])
-#     VALUES.append(i[3])
-#
-# # convert the dates to matplotlib format
-# DATES = matplotlib.dates.date2num(DATES)
-# # print(dates)
-# plt.hlines(100, DATES[0], DATES[-1])  # the maximum allowed level
-#
-# # plot all the dots for the dates
-# plt.plot_date(DATES, VALUES, markersize=3)
-# # plt.plot(result[3])
-# plt.show()

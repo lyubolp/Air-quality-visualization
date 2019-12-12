@@ -29,8 +29,6 @@ for i in r:
     print(i)
 ```
 """
-import csv
-from datetime import datetime
 from src.parser.parser import Parser
 import pandas as pd
 
