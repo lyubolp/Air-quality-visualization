@@ -56,15 +56,21 @@ class Plotter:
         self.plot.set_xdata(self.dates)
         self.plot.set_ydata(self.values)
 
-        # if self.parameter in self.max_values:
-        #     self.max_level.set_visible(True)
-        #     horizontal_line = []
-        #     for i in range(len(self.dates)):
-        #         horizontal_line.append(self.max_values[self.parameter])
-        #     self.max_level.set_ydata(horizontal_line)
-        # else:
-        #     self.max_level.set_ydata(self.values)
-        #     self.max_level.set_visible(False)
+        if self.parameter in self.max_values:
+            self.max_level.set_visible(True)
+            horizontal_line = []
+            for i in range(len(self.dates)):
+                horizontal_line.append(self.max_values[self.parameter])
+            self.max_level.set_xdata(self.dates)
+            self.max_level.set_ydata(horizontal_line)
+        else:
+            if len(self.result) is not 0:
+                self.max_level.set_xdata(self.dates)
+                self.max_level.set_ydata(self.values)
+                self.max_level.set_visible(False)
+            else:
+                self.max_level.set_xdata(self.START_DATE)
+                self.max_level.set_ydata([0])
 
         self.figure.canvas.draw_idle()
         self.axes.relim()  # make sure all the data fits
@@ -166,20 +172,20 @@ class Plotter:
 
         self.axes = plt.gca()
 
-        # if self.parameter in self.max_values:
-        #     horizontal_line = []
-        #     for i in range(len(self.dates)):
-        #         horizontal_line.append(self.max_values[self.parameter])
-        #     self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
-        # else:
-        #     horizontal_line = []
-        #     if len(self.result) is 0:
-        #         self.max_level, = plt.plot(self.START_DATE, [0], markersize=5)
-        #     else:
-        #         for i in range(len(self.dates)):
-        #             horizontal_line.append(self.values[0])
-        #         self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
-        #     self.max_level.set_visible(False)
+        if self.parameter in self.max_values:
+            horizontal_line = []
+            for i in range(len(self.dates)):
+                horizontal_line.append(self.max_values[self.parameter])
+            self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+        else:
+            horizontal_line = []
+            if len(self.result) is 0:
+                self.max_level, = plt.plot(self.START_DATE, [0], markersize=5)
+            else:
+                for i in range(len(self.dates)):
+                    horizontal_line.append(self.values[0])
+                self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+            self.max_level.set_visible(False)
 
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
