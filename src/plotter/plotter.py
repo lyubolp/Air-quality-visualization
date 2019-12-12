@@ -73,6 +73,8 @@ class Plotter:
         else:
             self.missing_data_text.set_visible(False)
 
+        print(self.parameter, self.station, self.values, len(self.values), self.dates, len(self.dates))
+
     def change_source(self, label):
         if label == 'Дружба':
             self.station = Station.Druzhba
@@ -148,6 +150,7 @@ class Plotter:
                                                   verticalalignment='bottom', horizontalalignment='right',
                                                   color='red', fontsize=25)
 
+        print(self.parameter, self.station, self.values, len(self.values), self.dates, len(self.dates))
         if len(self.result) is 0:
             self.missing_data_text.set_visible(True)
         else:
