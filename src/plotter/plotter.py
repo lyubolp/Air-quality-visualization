@@ -39,6 +39,7 @@ class Plotter:
         self.date_slider = None
         self.max_level = None
         self.is_single_day = False
+        self.missing_data_text = None
 
     def __parse_data_result(self):
         if self.station is not Station.All and self.parameter is not Parameter.All:
@@ -153,15 +154,16 @@ class Plotter:
         self.missing_data_text = self.figure.text(0.63, 0.07, 'Липсващи данни',
                                                   verticalalignment='bottom', horizontalalignment='right',
                                                   color='red', fontsize=25)
+        plt.subplots_adjust(left=0.20, bottom=0.25)
 
         if len(self.result) is 0:
             self.missing_data_text.set_visible(True)
+            self.plot, = plt.plot_date([self.START_DATE], [0], markersize=5)
+
         else:
             self.missing_data_text.set_visible(False)
+            self.plot, = plt.plot_date(self.dates, self.values, markersize=5)
 
-        plt.subplots_adjust(left=0.20, bottom=0.25)
-
-        self.plot, = plt.plot_date(self.dates, self.values, markersize=5)
         self.axes = plt.gca()
 
         # if self.parameter in self.max_values:
@@ -171,11 +173,13 @@ class Plotter:
         #     self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
         # else:
         #     horizontal_line = []
-        #     for i in range(len(self.dates)):
-        #         horizontal_line.append(self.values[2])
-        #     self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+        #     if len(self.result) is 0:
+        #         self.max_level, = plt.plot(self.START_DATE, [0], markersize=5)
+        #     else:
+        #         for i in range(len(self.dates)):
+        #             horizontal_line.append(self.values[0])
+        #         self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
         #     self.max_level.set_visible(False)
-
 
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
@@ -207,7 +211,6 @@ class Plotter:
         manager.window.showMaximized()
 
         plt.show()
-        print(matplotlib.dates.num2date(self.date_slider.val), self.start, self.end)
 
 # PARSER = csv_parser.CsvParser("data/data.csv")
 # RESULT = PARSER.get([Station.Kopitoto], [Parameter.CO])
