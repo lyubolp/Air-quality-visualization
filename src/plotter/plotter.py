@@ -38,6 +38,7 @@ class Plotter:
         self.END_DATE = matplotlib.dates.datestr2num("2018-06-19")
         self.date_slider = None
         self.max_level = None
+        self.is_single_day = False
 
     def __parse_data_result(self):
         if self.station is not Station.All and self.parameter is not Parameter.All:
@@ -72,8 +73,6 @@ class Plotter:
             self.missing_data_text.set_visible(True)
         else:
             self.missing_data_text.set_visible(False)
-
-        print(self.parameter, self.station, self.values, len(self.values), self.dates, len(self.dates))
 
     def change_source(self, label):
         if label == 'Дружба':
@@ -131,7 +130,11 @@ class Plotter:
     def change_date(self, value):
         self.start = matplotlib.dates.num2date(value, tz=None)
         self.start = self.start.replace(tzinfo=None)
-        self.result = self.parser.get([self.station], [self.parameter], self.start, self.start + timedelta(days=1))
+
+        if self.is_single_day is True:
+            self.end = self.start + timedelta(days=1)
+
+        self.result = self.parser.get([self.station], [self.parameter], self.start, self.end)
         self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
         self.__parse_data_result()
         self.__replot_data()
@@ -141,6 +144,7 @@ class Plotter:
         self.parameter = parameter
         self.start = day
         self.end = self.start + timedelta(days=1)
+        self.is_single_day = True
         self.result = self.parser.get([region], [parameter], self.start, self.start + timedelta(days=1))
 
         self.__parse_data_result()
@@ -150,7 +154,6 @@ class Plotter:
                                                   verticalalignment='bottom', horizontalalignment='right',
                                                   color='red', fontsize=25)
 
-        print(self.parameter, self.station, self.values, len(self.values), self.dates, len(self.dates))
         if len(self.result) is 0:
             self.missing_data_text.set_visible(True)
         else:
@@ -204,6 +207,7 @@ class Plotter:
         manager.window.showMaximized()
 
         plt.show()
+        print(matplotlib.dates.num2date(self.date_slider.val), self.start, self.end)
 
 # PARSER = csv_parser.CsvParser("data/data.csv")
 # RESULT = PARSER.get([Station.Kopitoto], [Parameter.CO])
