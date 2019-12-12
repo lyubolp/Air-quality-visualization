@@ -18,7 +18,8 @@ class Plotter:
         self.result = []
         self.station = None
         self.parameter = None
-        self.day = None
+        self.start = None
+        self.end = None
         self.plot = None
         self.dates = []
         self.values = []
@@ -53,19 +54,24 @@ class Plotter:
         self.plot.set_xdata(self.dates)
         self.plot.set_ydata(self.values)
 
-        if self.parameter in self.max_values:
-            self.max_level.set_visible(True)
-            horizontal_line = []
-            for i in range(len(self.dates)):
-                horizontal_line.append(self.max_values[self.parameter])
-            self.max_level.set_ydata(horizontal_line)
-        else:
-            self.max_level.set_ydata(self.values)
-            self.max_level.set_visible(False)
+        # if self.parameter in self.max_values:
+        #     self.max_level.set_visible(True)
+        #     horizontal_line = []
+        #     for i in range(len(self.dates)):
+        #         horizontal_line.append(self.max_values[self.parameter])
+        #     self.max_level.set_ydata(horizontal_line)
+        # else:
+        #     self.max_level.set_ydata(self.values)
+        #     self.max_level.set_visible(False)
 
         self.figure.canvas.draw_idle()
         self.axes.relim()  # make sure all the data fits
         self.axes.autoscale()  # auto-scale
+
+        if len(self.result) is 0:
+            self.missing_data_text.set_visible(True)
+        else:
+            self.missing_data_text.set_visible(False)
 
     def change_source(self, label):
         if label == 'Дружба':
@@ -84,7 +90,7 @@ class Plotter:
             # Should not be thrown - mainly for debugging purposes
             raise Exception("Invalid label")
 
-        self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
+        self.result = self.parser.get([self.station], [self.parameter], self.start, self.end)
         self.__parse_data_result()
         self.__replot_data()
 
@@ -116,15 +122,14 @@ class Plotter:
         else:
             # Should not be thrown - mainly for debugging purposes
             raise Exception("Invalid parameter")
-
-        self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
+        self.result = self.parser.get([self.station], [self.parameter], self.start, self.end)
         self.__parse_data_result()
         self.__replot_data()
 
     def change_date(self, value):
-        self.day = matplotlib.dates.num2date(value, tz=None)
-        self.day = self.day.replace(tzinfo=None)
-        self.result = self.parser.get([self.station], [self.parameter], self.day, self.day + timedelta(days=1))
+        self.start = matplotlib.dates.num2date(value, tz=None)
+        self.start = self.start.replace(tzinfo=None)
+        self.result = self.parser.get([self.station], [self.parameter], self.start, self.start + timedelta(days=1))
         self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
         self.__parse_data_result()
         self.__replot_data()
@@ -132,30 +137,44 @@ class Plotter:
     def plot_single_region_day(self, region: Station, parameter: Parameter, day: datetime):
         self.station = region
         self.parameter = parameter
-        self.day = day
-        self.result = self.parser.get([region], [parameter], self.day, self.day + timedelta(days=1))
+        self.start = day
+        self.end = self.start + timedelta(days=1)
+        self.result = self.parser.get([region], [parameter], self.start, self.start + timedelta(days=1))
 
-        print(self.result)
         self.__parse_data_result()
         self.figure, _ = plt.subplots()
 
+        self.missing_data_text = self.figure.text(0.63, 0.07, 'Липсващи данни',
+                                                  verticalalignment='bottom', horizontalalignment='right',
+                                                  color='red', fontsize=25)
+
+        if len(self.result) is 0:
+            self.missing_data_text.set_visible(True)
+        else:
+            self.missing_data_text.set_visible(False)
 
         plt.subplots_adjust(left=0.20, bottom=0.25)
 
         self.plot, = plt.plot_date(self.dates, self.values, markersize=5)
         self.axes = plt.gca()
 
-        if self.parameter in self.max_values:
-            horizontal_line = []
-            for i in range(len(self.dates)):
-                horizontal_line.append(self.max_values[self.parameter])
-            self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
-            print(type(self.max_level))
+        # if self.parameter in self.max_values:
+        #     horizontal_line = []
+        #     for i in range(len(self.dates)):
+        #         horizontal_line.append(self.max_values[self.parameter])
+        #     self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+        # else:
+        #     horizontal_line = []
+        #     for i in range(len(self.dates)):
+        #         horizontal_line.append(self.values[2])
+        #     self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
+        #     self.max_level.set_visible(False)
+
 
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
         self.date_slider = Slider(axamp, 'Дата', self.START_DATE, self.END_DATE, valstep=1,
-                                  valinit=matplotlib.dates.date2num(self.day))
+                                  valinit=matplotlib.dates.date2num(self.start))
         self.date_slider.valfmt = '{:%Y-%m-%d}'.format(matplotlib.dates.num2date(self.date_slider.val))
         self.date_slider.on_changed(self.change_date)
 
