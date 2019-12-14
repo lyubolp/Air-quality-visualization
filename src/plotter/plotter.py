@@ -37,8 +37,8 @@ class Plotter:
             Parameter.SO2: 350,
             Parameter.Humidity: 60
         }
-        self.START_DATE = matplotlib.dates.datestr2num("2016-01-20")
-        self.END_DATE = matplotlib.dates.datestr2num("2018-06-19")
+        self.start_date = matplotlib.dates.datestr2num("2016-01-20")
+        self.end_date = matplotlib.dates.datestr2num("2018-06-19")
         self.date_slider_start = None
         self.max_level = None
         self.is_single_day = False
@@ -75,19 +75,19 @@ class Plotter:
             self.max_level.set_xdata(self.dates)
             self.max_level.set_ydata(horizontal_line)
         else:
-            if len(self.result) is not 0:
+            if len(self.result) != 0:
                 self.max_level.set_xdata(self.dates)
                 self.max_level.set_ydata(self.values)
                 self.max_level.set_visible(False)
             else:
-                self.max_level.set_xdata(self.START_DATE)
+                self.max_level.set_xdata(self.start_date)
                 self.max_level.set_ydata([0])
 
         self.figure.canvas.draw_idle()
         self.axes.relim()  # make sure all the data fits
         self.axes.autoscale()  # auto-scale
 
-        if len(self.result) is 0:
+        if len(self.result) == 0:
             self.missing_data_text.set_visible(True)
         else:
             self.missing_data_text.set_visible(False)
@@ -213,9 +213,9 @@ class Plotter:
                                                   color='red', fontsize=25)
         plt.subplots_adjust(left=0.20, bottom=0.25)
 
-        if len(self.result) is 0:
+        if len(self.result) == 0:
             self.missing_data_text.set_visible(True)
-            self.plot, = plt.plot_date([self.START_DATE], [0], markersize=5)
+            self.plot, = plt.plot_date([self.start_date], [0], markersize=5)
 
         else:
             self.missing_data_text.set_visible(False)
@@ -230,8 +230,8 @@ class Plotter:
             self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
         else:
             horizontal_line = []
-            if len(self.result) is 0:
-                self.max_level, = plt.plot(self.START_DATE, [0], markersize=5)
+            if len(self.result) == 0:
+                self.max_level, = plt.plot(self.start_date, [0], markersize=5)
             else:
                 for i in range(len(self.dates)):
                     horizontal_line.append(self.values[0])
@@ -240,7 +240,7 @@ class Plotter:
 
         axcolor = 'lightgoldenrodyellow'
         axamp = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
-        self.date_slider_start = Slider(axamp, 'Дата', self.START_DATE, self.END_DATE,
+        self.date_slider_start = Slider(axamp, 'Дата', self.start_date, self.end_date,
                                         valstep=1,
                                         valinit=matplotlib.dates.date2num(self.start))
 
@@ -301,12 +301,11 @@ class Plotter:
         if self.start < self.end:
             self.invalid_period.set_visible(False)
 
-
         plt.subplots_adjust(left=0.20, bottom=0.25)
 
-        if len(self.result) is 0:
+        if len(self.result) == 0:
             self.missing_data_text.set_visible(True)
-            self.plot, = plt.plot_date([self.START_DATE], [0], markersize=5)
+            self.plot, = plt.plot_date([self.start_date], [0], markersize=5)
 
         else:
             self.missing_data_text.set_visible(False)
@@ -321,8 +320,8 @@ class Plotter:
             self.max_level, = plt.plot(self.dates, horizontal_line, markersize=5)
         else:
             horizontal_line = []
-            if len(self.result) is 0:
-                self.max_level, = plt.plot(self.START_DATE, [0], markersize=5)
+            if len(self.result) == 0:
+                self.max_level, = plt.plot(self.start_date, [0], markersize=5)
             else:
                 for i in range(len(self.dates)):
                     horizontal_line.append(self.values[0])
@@ -331,7 +330,8 @@ class Plotter:
 
         axcolor = 'lightgoldenrodyellow'
         date_slider_start_pos = plt.axes([0.25, 0.15, 0.60, 0.03], facecolor=axcolor)
-        self.date_slider_start = Slider(date_slider_start_pos, 'Дата от', self.START_DATE, self.END_DATE,
+        self.date_slider_start = Slider(date_slider_start_pos, 'Дата от',
+                                        self.start_date, self.end_date,
                                         valstep=1,
                                         valinit=matplotlib.dates.date2num(self.start))
 
@@ -340,9 +340,10 @@ class Plotter:
         self.date_slider_start.on_changed(self.__change_start_date)
 
         date_slider_end_pos = plt.axes([0.25, 0.10, 0.60, 0.03], facecolor=axcolor)
-        self.date_slider_end = Slider(date_slider_end_pos, 'Дата до', self.START_DATE, self.END_DATE,
-                                        valstep=1,
-                                        valinit=matplotlib.dates.date2num(self.end))
+        self.date_slider_end = Slider(date_slider_end_pos, 'Дата до',
+                                      self.start_date, self.end_date,
+                                      valstep=1,
+                                      valinit=matplotlib.dates.date2num(self.end))
 
         self.date_slider_end.valfmt = '{:%Y-%m-%d}'.format(
             matplotlib.dates.num2date(self.date_slider_start.val))
@@ -371,3 +372,4 @@ class Plotter:
         manager.window.showMaximized()
 
         plt.show()
+
